@@ -1,64 +1,43 @@
 import React, { Component } from "react";
-import ComponentChild from "./components/ComponentChild";
-import ComponentSister from "./components/ComponentSister";
-import State from "./State";
-//In this version, you can call State.debug() to store a list of events over time (under development). You can retrieve this list by printing document.events.
-State.debug();
-let globalState = { update_sequence: null }; //Create a global state and store all of the global properties that will rerender the component when changed.
-class App extends Component {
-  state = {};
+import Counter from "./components/Counter";
+import Clear from "./components/Clear";
+import Display from "./components/Display";
+import Square from "./components/Square";
+import G_State from "@scythodemes/lightweightglobalstate";
 
+G_State.debug({ live: true });
+/*Use the debug(...args) command to
+ monitor the global state via console logs.
+ */
+
+var {
+  G_number,
+} = G_State.now; /*You can use desctructuring to grab properties from the present global state. */
+class App extends Component {
   constructor(props) {
     super(props);
-
-    State.links(this, globalState); //This will link the component to the global state. Components linked to the global state will be able to react to any changes made to the global state.
-    //The link will rerender the component if it has
+    //----------------------------
+    this.state = { number: 0 };
+    this.state.G_dependancies = G_State.link("G_number");
+    //or this.state.G_dependancies = G_State.link("G_number", "G_secondNumber")
+    //or this.state.G_dependancies = {G_number: null, G_secondNumber: null};
+    G_State.updates(this);
+    /*For a class component, add a G_dependancies
+      object to its state and list the properties 
+      that will rerender the component when changed.
+      In this case everytime G_number is 
+      changed by the Counter, Square, and Clear components, we need
+      to render this app to show the updated G_number value.
+    ----------------------------*/
   }
-
   render() {
     return (
       <div>
-        <h1>Square Pyramidal Numbers</h1>
-        <button
-          onMouseDown={() => {
-            let newState = {}; //Instantiate a new state.
-
-            //Add a single event which modifies a global state property to the new state.
-            newState.G_number = () => {
-              State.now.G_number = 0; //While other global properties can be read inside the function, they should not be rewritten. Local properties can be modified freely, however.
-              return "clear_number"; //Return the purpose of that event.
-            };
-            //Create multiple events;
-            newState.G_sequence = () => {
-              State.now.G_sequence = "";
-              return "clear_sequence";
-            };
-            newState.G_iterant = () => {
-              State.now.G_iterant = 0;
-              return "clear_iterant";
-            };
-            //                       //
-            State.changesTo(newState); //Change the properties of the global state and update the components that are linked to the properties affected.
-          }}
-        >
-          Clear
-        </button>
-        <button
-          onMouseDown={() => {
-            let newState = {};
-            newState.G_number = () => {
-              State.now.G_number++;
-              return "increment_number";
-            };
-
-            State.changesTo(newState);
-          }}
-        >
-          Increment Counters: {State.now.G_number}
-        </button>
-        <ComponentChild />
-        <div>Sequence: {State.now.G_sequence}</div>
-        <ComponentSister />
+        number: {G_number.value} + 3 = {G_number.value + 3}
+        {<Display />}
+        <Counter />
+        <Square />
+        <Clear />
       </div>
     );
   }
